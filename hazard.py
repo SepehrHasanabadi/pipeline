@@ -5,8 +5,8 @@ class Hazard:
         self.stall = 0
         self.forward = 0
 
-    # should return boolean indicates if hazard occurs, the pipeline
-    # should be rectifed if hazard exists.
+    # should return a boolean indicates if hazard occurs, the pipeline
+    # should move forward in a proper manner if hazard exists.
     def control_hazards(self):
         return False
 
