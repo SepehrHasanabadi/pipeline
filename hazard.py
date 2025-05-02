@@ -4,6 +4,7 @@ class Hazard:
         self.forwarding = False
         self.stall = 0
         self.forward = 0
+        self.flush = 0
 
     # should return a boolean indicates if hazard occurs, the pipeline
     # should move forward in a proper manner if hazard exists.
@@ -16,6 +17,7 @@ class Hazard:
         if instruction and instruction.name in branch_insts:
             if instruction.source2 == self.pipeline.pipeline[0].label:
                 self.pipeline.pipeline[1].noop_instuction()
+                self.flush += 1
             else:
                 self.pipeline.instruction_pointer = next(
                     (
@@ -27,6 +29,7 @@ class Hazard:
                 )
                 for j in range(0, 2):
                     self.pipeline.pipeline[j].noop_instuction()
+                    self.flush += 1
             self.pipeline.move_instructions()
             return True
         return False
@@ -55,6 +58,7 @@ class Hazard:
                     self.forward += 1
                     return False
                 self.pipeline.move_instructions(from_index=j)
+                self.stall += 1
                 return True
 
         return False
