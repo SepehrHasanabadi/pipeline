@@ -7,8 +7,35 @@ class Hazard:
 
     # should return a boolean indicates if hazard occurs, the pipeline
     # should move forward in a proper manner if hazard exists.
-    def control_hazards(self):
+    def control_hazards_without_branch(self):
         return False
+
+    def control_hazards_with_branch(self):
+        branch_insts = ["BEQ", "BNE", "BGTZ", "BLTZ", "BGEZ", "BLEZ"]
+        instruction = self.pipeline.pipeline[2]  # EX stage
+        if instruction and instruction.name in branch_insts:
+            if instruction.source2 == self.pipeline.pipeline[0].label:
+                self.pipeline.pipeline[1].noop_instuction()
+            else:
+                self.pipeline.instruction_pointer = next(
+                    (
+                        i
+                        for i, obj in enumerate(self.pipeline.instructions)
+                        if obj.label == instruction.branch
+                    ),
+                    None,
+                )
+                for j in range(0, 2):
+                    self.pipeline.pipeline[j].noop_instuction()
+            self.pipeline.move_instructions()
+            return True
+        return False
+
+    def control_hazards(self):
+        if self.pipeline.branch_inst:
+            return self.control_hazards_with_branch()
+        else:
+            return self.control_hazards_without_branch()
 
     def structural_hazards(self):
         return False

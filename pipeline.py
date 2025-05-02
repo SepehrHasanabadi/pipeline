@@ -9,7 +9,9 @@ class Pipeline:
         self.clock = 0
         self.instructions = []
         self.completed_instructions = []
+        self.instruction_pointer = 0
         self.hazard = Hazard(self)
+        branch_inst = True
 
     def add_instruction(self, instruction_name):
         self.instructions.append(Instruction(instruction_name))
@@ -22,6 +24,17 @@ class Pipeline:
                 self.pipeline[i - 1] = None
                 self.pipeline[i].stage = self.stages[i]
 
+    def insert_instruction(self):
+        if (
+            self.instructions
+            and self.pipeline[0] is None
+            and self.instruction_pointer < len(self.instructions)
+        ):
+            new_instr = self.instructions[self.instruction_pointer]
+            self.pipeline[0] = new_instr
+            new_instr.stage = "IF"
+            self.instruction_pointer += 1
+
     def step(self):
         self.clock += 1
         print(f"\nClock Cycle {self.clock}:")
@@ -30,11 +43,7 @@ class Pipeline:
         if valid:
             self.move_instructions()
 
-        if self.instructions and self.pipeline[0] is None:
-            new_instr = self.instructions.pop(0)
-            self.pipeline[0] = new_instr
-            new_instr.stage = "IF"
-
+        self.insert_instruction()
         self.print_pipeline()
 
     def print_pipeline(self):
@@ -46,5 +55,5 @@ class Pipeline:
                 print(f"{stage_name}: Empty")
 
     def run(self):
-        while self.instructions or any(self.pipeline):
+        while self.instruction_pointer < len(self.instructions) or any(self.pipeline):
             self.step()
