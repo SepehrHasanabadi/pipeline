@@ -19,7 +19,20 @@ class Pipeline:
     def move_instructions(self, from_index=0):
         self.pipeline[-1] = None
         for i in range(len(self.stages) - 1, from_index, -1):
-            if self.pipeline[i - 1]:
+            if i == 2:  # Ex stage
+                for item in self.pipeline[i]:
+                    item.execution_clock -= 1
+                    item.order += 1
+                self.pipeline[i].append(self.pipeline[i - 1])
+                self.pipeline[i - 1].stage = self.stages[i]
+            if i == 3:  # Mem stage
+                for idx, item in enumerate(self.pipeline[i - 1]):
+                    if item.execution_clock <= 0:
+                        inst = self.pipeline.pop(idx)
+                        self.pipeline[i] = inst
+                        inst.stage = self.stages[i]
+                        break
+            elif self.pipeline[i - 1]:
                 self.pipeline[i] = self.pipeline[i - 1]
                 self.pipeline[i - 1] = None
                 self.pipeline[i].stage = self.stages[i]

@@ -12,6 +12,8 @@ class Instruction:
         self.stage = "IF"
         self.valid = True
         self.branch = None
+        self.execution_clock = 1
+        self.order = 0
         self.init_source_destination(command)
 
     def __repr__(self):
