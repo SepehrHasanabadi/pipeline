@@ -5,7 +5,7 @@ from hazard import Hazard
 class Pipeline:
     def __init__(self):
         self.stages = ["IF", "ID", "EX", "MEM", "WB"]
-        self.pipeline = [None] * len(self.stages)
+        self.pipeline = [None, None, [], None, None]
         self.clock = 0
         self.instructions = []
         self.completed_instructions = []
