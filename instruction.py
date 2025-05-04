@@ -1,5 +1,5 @@
 class Instruction:
-    def __init__(self, command):
+    def __init__(self, command, exe_clock=1):
         label = None
         try:
             label, command = command.split(":")
@@ -12,7 +12,7 @@ class Instruction:
         self.stage = "IF"
         self.valid = True
         self.branch = None
-        self.execution_clock = 1
+        self.execution_clock = exe_clock
         self.order = 0
         self.init_source_destination(command)
 
@@ -35,6 +35,7 @@ class Instruction:
     def noop_instuction(self):
         self.command = "NO_OP"
         self.name = "NO_OP"
+        self.execution_clock = 0
         self.destination = None
         self.source1 = None
         self.source2 = None

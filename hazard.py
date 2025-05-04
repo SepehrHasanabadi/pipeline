@@ -13,12 +13,9 @@ class Hazard:
 
     def control_hazards_with_branch(self):
         branch_insts = ["BEQ", "BNE", "BGTZ", "BLTZ", "BGEZ", "BLEZ"]
-        instruction = self.pipeline.pipeline[2]  # EX stage
-        if instruction and instruction.name in branch_insts:
-            if instruction.source2 == self.pipeline.pipeline[0].label:
-                self.pipeline.pipeline[1].noop_instuction()
-                self.flush += 1
-            else:
+        instructions = self.pipeline.pipeline[2]  # EX stage
+        for instruction in instructions:
+            if instruction.name in branch_insts:
                 self.pipeline.instruction_pointer = next(
                     (
                         i
@@ -30,8 +27,8 @@ class Hazard:
                 for j in range(0, 2):
                     self.pipeline.pipeline[j].noop_instuction()
                     self.flush += 1
-            self.pipeline.move_instructions()
-            return True
+                self.pipeline.move_instructions()
+                return True
         return False
 
     def control_hazards(self):
@@ -48,16 +45,21 @@ class Hazard:
         if not inst1 or (inst1.source1 is None and inst1.source2 is None):
             return False
 
+        all_forward_insts = []
+        for item in self.pipeline.pipeline[2:]:
+            if isinstance(item, list):
+                all_forward_insts.extend(item)
+            elif item is not None:
+                all_forward_insts.append(item)
         # Check against writers in EX, MEM, WB
-        for j in range(2, 5):
-            inst2 = self.pipeline.pipeline[j]
-            if not inst2 or inst2.destination is None:
+        for inst2 in all_forward_insts:
+            if inst2.destination is None:
                 continue
             if inst1.source1 == inst2.destination or inst1.source2 == inst2.destination:
                 if self.forwarding:
                     self.forward += 1
                     return False
-                self.pipeline.move_instructions(from_index=j)
+                self.pipeline.move_instructions(from_index=2)
                 self.stall += 1
                 return True
 

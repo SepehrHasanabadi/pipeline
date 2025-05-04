@@ -11,28 +11,32 @@ class Pipeline:
         self.completed_instructions = []
         self.instruction_pointer = 0
         self.hazard = Hazard(self)
-        branch_inst = True
+        self.branch_inst = True
 
-    def add_instruction(self, instruction_name):
-        self.instructions.append(Instruction(instruction_name))
+    def add_instruction(self, instruction_name, exe_clock=1):
+        self.instructions.append(Instruction(instruction_name, exe_clock))
 
     def move_instructions(self, from_index=0):
         self.pipeline[-1] = None
         for i in range(len(self.stages) - 1, from_index, -1):
             if i == 2:  # Ex stage
-                for item in self.pipeline[i]:
+                for item in self.pipeline[i] or []:
                     item.execution_clock -= 1
                     item.order += 1
-                self.pipeline[i].append(self.pipeline[i - 1])
-                self.pipeline[i - 1].stage = self.stages[i]
-            if i == 3:  # Mem stage
-                for idx, item in enumerate(self.pipeline[i - 1]):
+                if self.pipeline[i - 1]:
+                    inst = self.pipeline[i - 1]
+                    inst.execution_clock -= 1
+                    inst.stage = self.stages[i]
+                    self.pipeline[i].append(inst)
+                    self.pipeline[i - 1] = None
+            elif i == 3:  # Mem stage
+                for idx, item in enumerate(self.pipeline[i - 1] or []):
                     if item.execution_clock <= 0:
-                        inst = self.pipeline.pop(idx)
+                        inst = self.pipeline[2].pop(idx)
                         self.pipeline[i] = inst
                         inst.stage = self.stages[i]
                         break
-            elif self.pipeline[i - 1]:
+            elif self.pipeline[i-1]:
                 self.pipeline[i] = self.pipeline[i - 1]
                 self.pipeline[i - 1] = None
                 self.pipeline[i].stage = self.stages[i]
