@@ -38,7 +38,26 @@ class Hazard:
             return self.control_hazards_without_branch()
 
     def structural_hazards(self):
-        return False
+        FU_1 = ['MUL']
+        FU_2 = ['ADD', 'SUB']
+        fu1_busy_inst = None
+        fu2_busy_inst = None
+        stall_insts = []
+        for idx, inst in enumerate(self.pipeline.pipeline[2]):
+            if inst.name in FU_1 and fu1_busy_inst is None:
+                fu1_busy_inst  = inst
+                continue
+            if inst.name in FU_2 and fu2_busy_inst is None:
+                fu2_busy_inst  = inst
+                continue
+            instruction = self.pipeline.pipeline[2].pop(idx)
+            instruction.order += 1
+            stall_insts.append(instruction)
+        self.pipeline.move_instructions()
+        for inst in stall_insts:
+            self.pipeline.pipeline[2].append(inst)
+        return True
+        
 
     def raw_hazards(self):
         inst1 = self.pipeline.pipeline[1]  # ID stage (the reader)
