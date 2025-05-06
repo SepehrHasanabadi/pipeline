@@ -50,9 +50,13 @@ class Hazard:
             if inst.name in FU_2 and fu2_busy_inst is None:
                 fu2_busy_inst  = inst
                 continue
+            if inst.name not in FU_1+FU_1:
+                continue
             instruction = self.pipeline.pipeline[2].pop(idx)
             instruction.order += 1
             stall_insts.append(instruction)
+        if len(stall_insts) == 0:
+            return False
         self.pipeline.move_instructions()
         for inst in stall_insts:
             self.pipeline.pipeline[2].append(inst)

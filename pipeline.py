@@ -17,7 +17,8 @@ class Pipeline:
         self.instructions.append(Instruction(instruction_name, exe_clock))
 
     def move_instructions(self, from_index=0):
-        self.pipeline[-1] = []
+        max_order = max([obj.order for obj in self.pipeline[-1]], default=None)
+        self.pipeline[-1] = [obj for obj in self.pipeline[-1] if obj.order != max_order]
         for i in range(len(self.stages) - 1, from_index, -1):
             if i == 2:  # Ex stage
                 for item in self.pipeline[i]:
@@ -79,11 +80,13 @@ class Pipeline:
     def run(self):
         any_inst = False
         while self.instruction_pointer < len(self.instructions) or any_inst:
+            any_inst = False
             for item in self.pipeline:
                 if isinstance(item, list):
                     any_inst = any(item)
-                    break
                 elif item is not None:
                     any_inst = True
+                if any_inst:
                     break
-            self.step()
+            if self.instruction_pointer < len(self.instructions) or any_inst:
+                self.step()
