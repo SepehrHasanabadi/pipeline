@@ -23,8 +23,22 @@ def inst_structural_hazard():
     p.add_instruction("MUL R4 R5 R6", 2)
 
 
+
+def inst_waw_hazard():
+    p.add_instruction("ADD R1 R2 R3", 1)
+    p.add_instruction("SUB R1 R4 R5", 1)
+
+
+def inst_war_hazard():
+    p.add_instruction("ADD R2 R3 R4", 2)
+    p.add_instruction("SUB R5 R2 R6", 1)
+
+
 if __name__ == "__main__":
     # inst_raw_hazard()
     # inst_control_hazard()
-    inst_structural_hazard()
+    #inst_structural_hazard()
+    #inst_waw_hazard()
+    inst_war_hazard()
+
     p.run()

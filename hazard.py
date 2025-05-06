@@ -85,9 +85,48 @@ class Hazard:
         return False
 
     def waw_hazards(self):
+        inst_id = self.pipeline.pipeline[1]
+        if not inst_id or inst_id.destination is None:
+            return False
+
+        writers = []  # Let's see who wants to write where :))
+        for stage in self.pipeline.pipeline[2:]:
+            # stage 2 (EX) is a list, stage 3 (MEM) and 4 (WB) are single insts  ## WHY?! 🤔
+            if isinstance(stage, list):
+                writers.extend(stage)
+            elif stage:
+                writers.append(stage)
+
+        for inst_ahead in writers:
+            if inst_ahead.destination == inst_id.destination:
+                self.pipeline.move_instructions(from_index=2)
+                self.stall += 1
+                return True
+
         return False
 
     def war_hazards(self):
+        inst_id = self.pipeline.pipeline[1]
+        if not inst_id:
+            return False
+
+        # any pending writer ahead?
+        writers = []
+        for stage in self.pipeline.pipeline[2:]:
+            if isinstance(stage, list):
+                writers.extend(stage)
+            elif stage:
+                writers.append(stage)
+
+        for inst_ahead in writers:
+            if inst_ahead.destination and (
+                inst_id.source1 == inst_ahead.destination
+                or inst_id.source2 == inst_ahead.destination
+            ):
+                self.pipeline.move_instructions(from_index=2)
+                self.stall += 1
+                return True
+
         return False
 
     def validate(self):
