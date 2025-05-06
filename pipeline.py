@@ -5,7 +5,7 @@ from hazard import Hazard
 class Pipeline:
     def __init__(self):
         self.stages = ["IF", "ID", "EX", "MEM", "WB"]
-        self.pipeline = [None, None, [], None, None]
+        self.pipeline = [None, None, [], None, []]
         self.clock = 0
         self.instructions = []
         self.completed_instructions = []
@@ -17,10 +17,10 @@ class Pipeline:
         self.instructions.append(Instruction(instruction_name, exe_clock))
 
     def move_instructions(self, from_index=0):
-        self.pipeline[-1] = None
+        self.pipeline[-1] = []
         for i in range(len(self.stages) - 1, from_index, -1):
             if i == 2:  # Ex stage
-                for item in self.pipeline[i] or []:
+                for item in self.pipeline[i]:
                     item.execution_clock -= 1
                     item.order += 1
                 if self.pipeline[i - 1]:
@@ -36,7 +36,12 @@ class Pipeline:
                         self.pipeline[i] = inst
                         inst.stage = self.stages[i]
                         break
-            elif self.pipeline[i-1]:
+            elif i == 4 and self.pipeline[i - 1]:
+                inst = self.pipeline[i - 1]
+                inst.stage = self.stages[i]
+                self.pipeline[i].append(inst)
+                self.pipeline[i - 1] = None
+            elif self.pipeline[i - 1]:
                 self.pipeline[i] = self.pipeline[i - 1]
                 self.pipeline[i - 1] = None
                 self.pipeline[i].stage = self.stages[i]
@@ -72,5 +77,13 @@ class Pipeline:
                 print(f"{stage_name}: Empty")
 
     def run(self):
-        while self.instruction_pointer < len(self.instructions) or any(self.pipeline):
+        any_inst = False
+        while self.instruction_pointer < len(self.instructions) or any_inst:
+            for item in self.pipeline:
+                if isinstance(item, list):
+                    any_inst = any(item)
+                    break
+                elif item is not None:
+                    any_inst = True
+                    break
             self.step()

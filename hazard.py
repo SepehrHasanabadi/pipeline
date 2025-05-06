@@ -58,7 +58,6 @@ class Hazard:
             self.pipeline.pipeline[2].append(inst)
         return True
         
-
     def raw_hazards(self):
         inst1 = self.pipeline.pipeline[1]  # ID stage (the reader)
         if not inst1 or (inst1.source1 is None and inst1.source2 is None):
@@ -85,7 +84,24 @@ class Hazard:
         return False
 
     def waw_hazards(self):
-        return False
+        wb_insts = self.pipeline.pipeline[4]  # WB stage
+        all_previous_insts = []
+        for item in self.pipeline.pipeline[:4]:
+            if isinstance(item, list):
+                all_previous_insts.extend(item)
+            elif item is not None:
+                all_previous_insts.append(item)
+
+        stall_wb = []
+        for prev in all_previous_insts:
+            for wb_inst in wb_insts:
+                if prev.order > wb_inst.order and prev.destination == wb_inst.destination:
+                    stall_wb.append(wb_inst)
+        if len(stall_wb) == 0:
+            return False
+        self.pipeline.move_instructions()
+        self.pipeline.pipeline[-1].extend(stall_wb)
+        return True
 
     def war_hazards(self):
         return False
