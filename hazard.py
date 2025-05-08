@@ -62,7 +62,7 @@ class Hazard:
             self.pipeline.pipeline[2].append(inst)
         return True
         
-    def raw_hazards(self):
+    def war_hazards(self):
         inst1 = self.pipeline.pipeline[1]  # ID stage (the reader)
         if not inst1 or (inst1.source1 is None and inst1.source2 is None):
             return False
@@ -107,7 +107,27 @@ class Hazard:
         self.pipeline.pipeline[-1].extend(stall_wb)
         return True
 
-    def war_hazards(self):
+    def raw_hazards(self):
+        inst1 = self.pipeline.pipeline[1]  # ID stage (the reader)
+        if not inst1 or inst1.destination is None:
+            return False
+
+        all_forward_insts = []
+        for item in self.pipeline.pipeline[2:]:
+            if isinstance(item, list):
+                all_forward_insts.extend(item)
+            elif item is not None:
+                all_forward_insts.append(item)
+        # Check against writers in EX, MEM, WB
+        for inst2 in all_forward_insts:
+            if inst1.destination == inst2.source1 or inst1.destination == inst2.source2:
+                if self.forwarding:
+                    self.forward += 1
+                    return False
+                self.pipeline.move_instructions(from_index=2)
+                self.stall += 1
+                return True
+
         return False
 
     def validate(self):
