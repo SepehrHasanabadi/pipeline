@@ -90,3 +90,6 @@ class Pipeline:
                     break
             if self.instruction_pointer < len(self.instructions) or any_inst:
                 self.step()
+        
+        print(f"\nStall Numbers: {self.hazard.stall}")
+        print(f"Forward Numbers: {self.hazard.forward}")

@@ -57,6 +57,7 @@ class Hazard:
             stall_insts.append(instruction)
         if len(stall_insts) == 0:
             return False
+        self.forward += 1
         self.pipeline.move_instructions()
         for inst in stall_insts:
             self.pipeline.pipeline[2].append(inst)
@@ -103,6 +104,7 @@ class Hazard:
                     stall_wb.append(wb_inst)
         if len(stall_wb) == 0:
             return False
+        self.forward += 1
         self.pipeline.move_instructions()
         self.pipeline.pipeline[-1].extend(stall_wb)
         return True
