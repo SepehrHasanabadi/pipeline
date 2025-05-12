@@ -93,3 +93,4 @@ class Pipeline:
         
         print(f"\nStall Numbers: {self.hazard.stall}")
         print(f"Forward Numbers: {self.hazard.forward}")
+        print(f"Cycles: {self.clock}")

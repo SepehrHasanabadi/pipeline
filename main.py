@@ -34,9 +34,9 @@ def inst_waw_hazard():
 
 
 if __name__ == "__main__":
-    inst_war_hazard()
+    # inst_war_hazard()
     inst_raw_hazard()
-    inst_control_hazard()
-    inst_structural_hazard()
-    inst_waw_hazard()
+    # inst_control_hazard()
+    # inst_structural_hazard()
+    # inst_waw_hazard()
     p.run()
