@@ -90,25 +90,40 @@ class Scoreboard:
         self.waiting = list(instructions)
         self.in_flight = []
 
+    def print_status(self, fu):
+        header = ""
+        print("Register Result Status")
+        for key in self.RS:
+            header += f"{key:<6}"
+        print(header)
+        print("-" * len(header))
+        for value in self.RS.values():
+            print(f"{str(value):<6}", end="")
+
+        header = f"{'Name':<18}{'Busy':<6}{'Op':<6}{'Instr':<6}"
+        print(f"\n\n\nFunction Unit Status\n{header}")
+        print("-" * len(header))
+        for unit in fu.units:
+            instr_label = ""
+            if unit["instr"] is not None:
+                instr_label = (
+                    f"{unit['instr'].op} {unit['instr'].dest}:{unit['instr'].src1},{unit['instr'].src2}"
+                    if unit["instr"].src1 or unit["instr"].src2
+                    else f"{unit['instr'].op} {unit['instr'].dest}"
+                )
+            print(
+                f"{fu.name:<18}{unit['busy']:<6}{unit['op'] or '':<6}{instr_label:<6}"
+            )
+        print()
+        print("*" * len(header))
+        print()
+
     def step(self):
         self.clock += 1
 
         for fu in self.FUs.values():
             fu.step()
-            header = f"{'Name':<18}{'Busy':<6}{'Op':<6}{'Instr':<6}"
-            print(f"\n{header}")
-            print("-" * len(header))
-            for unit in fu.units:
-                instr_label = ""
-                if unit["instr"] is not None:
-                    instr_label = (
-                        f"{unit['instr'].op} {unit['instr'].dest}:{unit['instr'].src1},{unit['instr'].src2}"
-                        if unit["instr"].src1 or unit["instr"].src2
-                        else f"{unit['instr'].op} {unit['instr'].dest}"
-                    )
-                print(
-                    f"{fu.name:<18}{unit['busy']:<6}{unit['op'] or '':<6}{instr_label:<6}"
-                )
+            self.print_status(fu)
 
         for instr in list(self.in_flight):
             if (
