@@ -2,22 +2,23 @@
 # from collections import deque, defaultdict
 
 ISA = {
-    "LD": {"fu": "LS", "cycles": None},
-    "ST": {"fu": "LS", "cycles": None},
-    "ADD": {"fu": "ALU", "cycles": None},
-    "SUB": {"fu": "ALU", "cycles": None},
-    "MUL": {"fu": "MUL", "cycles": None},
-    "DIV": {"fu": "MUL", "cycles": None},
-    "AND": {"fu": "ALU", "cycles": None},
-    "OR": {"fu": "ALU", "cycles": None},
-    "XOR": {"fu": "ALU", "cycles": None},
-    "NOT": {"fu": "ALU", "cycles": None},
-    "ROL": {"fu": "ALU", "cycles": None},
-    "ROR": {"fu": "ALU", "cycles": None},
-    "SHL": {"fu": "ALU", "cycles": None},
-    "SHR": {"fu": "ALU", "cycles": None},
+    "LD":   {"fu": "LS", "cycles": None},
+    "ST":   {"fu": "LS", "cycles": None},
+    "BRZ":  {"fu": "BR", "cycles": None},
+    "BRNZ": {"fu": "BR", "cycles": None},
+    "ADD":  {"fu": "ALU", "cycles": None},
+    "SUB":  {"fu": "ALU", "cycles": None},
+    "ROR":  {"fu": "ALU", "cycles": None},
+    "ROL":  {"fu": "ALU", "cycles": None},
+    "SHR":  {"fu": "ALU", "cycles": None},
+    "SHL":  {"fu": "ALU", "cycles": None},
+    "OUT":  {"fu": "IO",  "cycles": None},
+    "AND":  {"fu": "ALU", "cycles": None},
+    "OR":   {"fu": "ALU", "cycles": None},
+    "XOR":  {"fu": "ALU", "cycles": None},
+    "NOT":  {"fu": "ALU", "cycles": None},
+    "HLT":  {"fu": "CTRL", "cycles": None}
 }
-
 
 class Instruction:
     def __init__(self, op, dest, src1=None, src2=None):
@@ -27,6 +28,9 @@ class Instruction:
         self.src2 = src2
         self.stage_cycles = {}
         self.remaining_exec = 0
+
+    def __str__(self):
+        return f"{self.op} {self.dest}:{self.src1},{self.src2}"
 
 
 class FunctionalUnit:
@@ -94,11 +98,11 @@ class Scoreboard:
         header = ""
         print("Register Result Status")
         for key in self.RS:
-            header += f"{key:<6}"
+            header += f"{key:<15}"
         print(header)
         print("-" * len(header))
         for value in self.RS.values():
-            print(f"{str(value):<6}", end="")
+            print(f"{str(value):<15}", end="")
 
         header = f"{'Name':<18}{'Busy':<6}{'Op':<6}{'Instr':<6}"
         print(f"\n\n\nFunction Unit Status\n{header}")
@@ -164,7 +168,11 @@ class Scoreboard:
 
         waiting_clone = self.waiting[:]
         dependencies = []
+        j = 0
         for inst in waiting_clone:
+            if inst.op == 'HLT' and len(waiting_clone) > 1:
+                continue
+
             noRAW = all(self.RS.get(r) is None for r in (inst.src1, inst.src2) if r)
             noWAR = not any(
                 inst.dest == r.src1 or inst.dest == r.src1 for r in self.in_flight
@@ -183,8 +191,9 @@ class Scoreboard:
                 if inst.dest:
                     self.RS[inst.dest] = inst
                 self.in_flight.append(inst)
-                self.waiting.pop(0)
+                self.waiting.pop(j)
             else:
+                j += 1
                 dependencies.extend(
                     [r for r in [inst.dest, inst.src1, inst.src2] if r is not None]
                 )
@@ -209,13 +218,38 @@ class Scoreboard:
 
 if __name__ == "__main__":
     TIMING = {op: {"ISS": 1, "RO": 1, "EX": 3, "WB": 1} for op in ISA}
-    FU_CONFIG = {"ALU": 2, "MUL": 1, "LS": 2}
-    prog = [
-        Instruction("LD", "R1", "0"),
-        Instruction("LD", "R2", "1"),
-        Instruction("ADD", "R3", "R1", "R2"),
-        Instruction("MUL", "R4", "R3", "R2"),
-        Instruction("ST", None, "R4", "2"),
+    FU_CONFIG = {
+        "ALU": 2,
+        "LS": 2,
+        "BR": 1,
+        "IO": 1,
+        "CTRL": 1
+    }
+    instrs = [
+        Instruction("LD", "R1", "0"),           # ACC ← M[0]
+        Instruction("ST", None, "R1", "1"),     # M[1] ← ACC
+
+        Instruction("BRZ", None, "1"),       # if ACC == 0 then PC ← addr
+        Instruction("BRNZ", None, "1"),      # if ACC ≠ 0 then PC ← addr
+
+        Instruction("ADD", "R1", "R1", "R2"),   # ACC ← ACC + M[addr]
+        Instruction("SUB", "R1", "R1", "R2"),   # ACC ← ACC - M[addr]
+
+        Instruction("ROR", "R1"),               # ACC ← rotate-right(ACC)
+        Instruction("ROL", "R1"),               # ACC ← rotate-left(ACC)
+
+        Instruction("SHR", "R1"),               # ACC ← logical-shift-right(ACC)
+        Instruction("SHL", "R1"),               # ACC ← logical-shift-left(ACC)
+
+        Instruction("OUT", "R1"),               # OUT ← ACC
+
+        Instruction("AND", "R1", "R1", "R2"),   # ACC ← ACC ∧ M[addr]
+        Instruction("OR", "R1", "R1", "R2"),    # ACC ← ACC ∨ M[addr]
+        Instruction("XOR", "R1", "R1", "R2"),   # ACC ← ACC ⊕ M[addr]
+
+        Instruction("NOT", "R1"),               # ACC ← ¬ACC
+
+        Instruction("HLT", None)                      # stop execution
     ]
-    sb = Scoreboard(prog, TIMING, FU_CONFIG)
+    sb = Scoreboard(instrs, TIMING, FU_CONFIG)
     sb.run()
